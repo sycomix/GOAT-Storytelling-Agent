@@ -1,7 +1,6 @@
 def split_into_words_w_newline(text):
     lines = text.split('\n')
-    split_text = [line.split(None) for line in lines if line]
-    return split_text
+    return [line.split(None) for line in lines if line]
 
 
 def remove_last_n_words(text, n):
@@ -9,8 +8,7 @@ def remove_last_n_words(text, n):
     i = 1
     lines_to_slice = 0
     while True:
-        line = split_text[-i]
-        if line:
+        if line := split_text[-i]:
             n_words = len(line)
             if n_words < n:
                 n -= n_words
@@ -31,8 +29,7 @@ def keep_last_n_words(text, n):
     i = 1
     lines_to_slice = 0
     while True:
-        line = split_text[-i]
-        if line:
+        if line := split_text[-i]:
             n_words = len(line)
             if n_words < n:
                 n -= n_words
