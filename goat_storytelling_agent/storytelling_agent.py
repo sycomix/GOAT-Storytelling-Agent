@@ -56,9 +56,7 @@ def _query_chat_hf(endpoint, messages, tokenizer, retries=3,
                 result_prefix = messages[-1]["content"]
             else:
                 result_prefix = ''
-            generated_text = result_prefix + json.loads(
-                response.text)['generated_text']
-            return generated_text
+            return result_prefix + json.loads(response.text)['generated_text']
         except Exception:
             traceback.print_exc()
             print('Timeout error, retrying...')
@@ -174,7 +172,7 @@ class StoryAgent:
         fields = self.prompt_engine.book_spec_fields
         spec_dict = {field: '' for field in fields}
         last_field = None
-        if "\"\"\"" in text_spec[:int(len(text_spec)/2)]:
+        if "\"\"\"" in text_spec[: len(text_spec) // 2]:
             header, sep, text_spec = text_spec.partition("\"\"\"")
         text_spec = text_spec.strip()
 
@@ -190,13 +188,11 @@ class StoryAgent:
                 if last_field in spec_dict:
                     spec_dict[last_field] += value.strip()
             elif ':' in line:
-                last_field = 'other'
-                spec_dict[last_field] = ''
-            else:
-                if last_field:
+                spec_dict['other'] = ''
+            elif last_field:
                     # If line does not contain ':' it should be
                     # the continuation of the last field's value
-                    spec_dict[last_field] += ' ' + line.strip()
+                spec_dict[last_field] += f' {line.strip()}'
         spec_dict.pop('other', None)
         return spec_dict
 
@@ -282,8 +278,7 @@ class StoryAgent:
         messages = self.prompt_engine.create_plot_chapters_messages(book_spec, self.form)
         plan = []
         while not plan:
-            text_plan = self.query_chat(messages)
-            if text_plan:
+            if text_plan := self.query_chat(messages):
                 plan = Plan.parse_text_plan(text_plan)
         return messages, plan
 
@@ -309,8 +304,7 @@ class StoryAgent:
         for act_num in range(3):
             messages = self.prompt_engine.enhance_plot_chapters_messages(
                 act_num, text_plan, book_spec, self.form)
-            act = self.query_chat(messages)
-            if act:
+            if act := self.query_chat(messages):
                 act_dict = Plan.parse_act(act)
                 while len(act_dict['chapters']) < 2:
                     act = self.query_chat(messages)
@@ -371,23 +365,20 @@ class StoryAgent:
                                for ch_num in ch_nums}
             for ch_num, chapter in merged_chapters.items():
                 scenes = re.split(r'Scene \d+.{0,10}?:', chapter)
-                scenes = [text.strip() for text in scenes[1:]
-                          if (text and (len(text.split()) > 3))]
-                if not scenes:
-                    continue
-                act['chapter_scenes'][ch_num] = scenes
+                if scenes := [
+                    text.strip()
+                    for text in scenes[1:]
+                    if (text and (len(text.split()) > 3))
+                ]:
+                    act['chapter_scenes'][ch_num] = scenes
         return all_messages, plan
 
     @staticmethod
     def prepare_scene_text(text):
         lines = text.split('\n')
-        ch_ids = [i for i in range(5)
-                  if 'Chapter ' in lines[i]]
-        if ch_ids:
+        if ch_ids := [i for i in range(5) if 'Chapter ' in lines[i]]:
             lines = lines[ch_ids[-1]+1:]
-        sc_ids = [i for i in range(5)
-                  if 'Scene ' in lines[i]]
-        if sc_ids:
+        if sc_ids := [i for i in range(5) if 'Scene ' in lines[i]]:
             lines = lines[sc_ids[-1]+1:]
 
         placeholder_i = None
@@ -482,12 +473,10 @@ class StoryAgent:
         form_text = []
         for act in plan:
             for ch_num, chapter in act['chapter_scenes'].items():
-                sc_num = 1
-                for scene in chapter:
+                for sc_num, scene in enumerate(chapter, start=1):
                     previous_scene = form_text[-1] if form_text else None
                     _, generated_scene = self.write_a_scene(
                         scene, sc_num, ch_num, plan,
                         previous_scene=previous_scene)
                     form_text.append(generated_scene)
-                    sc_num += 1
         return form_text

@@ -24,9 +24,9 @@ class Plan:
 
         # [act1, act2, act3], [Act + act1, act2, act3]
         if acts[0].startswith('Act '):
-            acts = [acts[0]] + ['Act ' + act for act in acts[1:]]
+            acts = [acts[0]] + [f'Act {act}' for act in acts[1:]]
         else:
-            acts = ['Act ' + act for act in acts[:]]
+            acts = [f'Act {act}' for act in acts[:]]
         return acts
 
     @staticmethod
@@ -58,8 +58,8 @@ class Plan:
         ch_num = 1
         for i, act in enumerate(plan):
             act_descr = act['act_descr'] + '\n'
-            if not re.search(r'Act \d', act_descr[0:50]):
-                act_descr = f'Act {i+1}:\n' + act_descr
+            if not re.search(r'Act \d', act_descr[:50]):
+                act_descr = f'Act {i + 1}:\n{act_descr}'
             for chapter in act['chapters']:
                 if (i + 1) == act_num:
                     act_descr += f'- Chapter {ch_num}: {chapter}\n'
@@ -76,8 +76,8 @@ class Plan:
         ch_num = 1
         for i, act in enumerate(plan):
             act_descr = act['act_descr'] + '\n'
-            if not re.search(r'Act \d', act_descr[0:50]):
-                act_descr = f'Act {i+1}:\n' + act_descr
+            if not re.search(r'Act \d', act_descr[:50]):
+                act_descr = f'Act {i + 1}:\n{act_descr}'
             for chapter in act['chapters']:
                 act_descr += f'- Chapter {ch_num}: {chapter}\n'
                 ch_num += 1
